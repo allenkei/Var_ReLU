@@ -26,9 +26,15 @@ lower_median_income <- quantile(data$median_income, 0.025, na.rm = TRUE)
 upper_median_income <- quantile(data$median_income, 0.975, na.rm = TRUE)
 
 
-data <- data %>% filter(
+data <- data %>% 
+  filter(
     avg_occupancy >= lower_avg_occupancy & avg_occupancy <= upper_avg_occupancy,
     median_income >= lower_median_income & median_income <= upper_median_income
+  ) %>%
+  select(avg_occupancy, median_income, log_median_house_value) %>%
+  mutate(
+    avg_occupancy = (avg_occupancy - min(avg_occupancy)) / (max(avg_occupancy) - min(avg_occupancy)),
+    median_income = (median_income - min(median_income)) / (max(median_income) - min(median_income))
   )
 
 data_final <- data %>% select(avg_occupancy, median_income, log_median_house_value)

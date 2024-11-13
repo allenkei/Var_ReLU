@@ -18,14 +18,14 @@ def parse_args():
   parser.add_argument('--input_dim', default=2, type=int)
   parser.add_argument('--hidden_dim', default=64, type=int)
   parser.add_argument('--output_dim', default=1) 
-  parser.add_argument('--lr1', default=0.001) # M1 estimator based on residuals
-  parser.add_argument('--lr2', default=0.001) # M1 estimator based on residuals
-  parser.add_argument('--lr3', default=0.001) # M2 direct estimator
+  parser.add_argument('--lr1', default=0.0005) # M1 estimator based on residuals
+  parser.add_argument('--lr2', default=0.0005) # M1 estimator based on residuals
+  parser.add_argument('--lr3', default=0.0005) # M2 direct estimator
   parser.add_argument('--num_epochs', default=1000)
   parser.add_argument('--num_trials', default=100, type=int)
   parser.add_argument('--data_dir', default='./data_real/')
   parser.add_argument('--output_dir', default='./result_real/')
-  parser.add_argument('-f', required=False) # needed in Colab 
+  #parser.add_argument('-f', required=False) # needed in Colab 
 
   return parser.parse_args()
 
@@ -60,7 +60,20 @@ df_selected = df_selected[
     (df_selected['median_income'] >= lower_median_income) & (df_selected['median_income'] <= upper_median_income)
 ]
 
+# Min-max scaling to [0, 1] for 'median_income' and 'avg_occupancy'
+df_selected['avg_occupancy'] = (df_selected['avg_occupancy'] - df_selected['avg_occupancy'].min()) /\
+ (df_selected['avg_occupancy'].max() - df_selected['avg_occupancy'].min())
+df_selected['median_income'] = (df_selected['median_income'] - df_selected['median_income'].min()) /\
+ (df_selected['median_income'].max() - df_selected['median_income'].min())
+
 print(f'[INFO] {args.data} data size:',df_selected.shape)
+
+
+
+
+def initialize_uniform_0_1(model):
+    for param in model.parameters():
+        torch.nn.init.uniform_(param, a=0.0, b=1.0)
 
 
 
@@ -113,6 +126,7 @@ for i in range(args.num_trials):
   ####################
 
   model1 = NN(args.input_dim, args.hidden_dim, args.output_dim).to(device)
+  #initialize_uniform_0_1(model1)
   optimizer1 = optim.Adam(model1.parameters(), lr=args.lr1)
 
 
@@ -140,6 +154,7 @@ for i in range(args.num_trials):
   ####################
 
   model2 = NN(args.input_dim, args.hidden_dim, args.output_dim).to(device)
+  #initialize_uniform_0_1(model2)
   optimizer2 = optim.Adam(model2.parameters(), lr=args.lr2)
 
   # Train the model2
@@ -179,6 +194,7 @@ for i in range(args.num_trials):
   y_squared = y_train_sample.clone() ** 2
 
   model3 = NN(args.input_dim, args.hidden_dim, args.output_dim).to(device)
+  initialize_uniform_0_1(model3)
   optimizer3 = optim.Adam(model3.parameters(), lr=args.lr3)
 
   # Train the model3
@@ -196,19 +212,19 @@ for i in range(args.num_trials):
     test_g_direct = test_prediction3 - test_prediction1 ** 2 # REUSE test_prediction1
     test_g_direct = torch.where(test_g_direct < 0, torch.tensor(0.0), test_g_direct)
   
-    # 95% interval
-    lower_bound = test_prediction1 - 1.96 * torch.sqrt(test_g_direct)
-    upper_bound = test_prediction1 + 1.96 * torch.sqrt(test_g_direct)
+  # 95% interval
+  lower_bound = test_prediction1 - 1.96 * torch.sqrt(test_g_direct)
+  upper_bound = test_prediction1 + 1.96 * torch.sqrt(test_g_direct)
 
-    is_in_interval = (y_test_sample >= lower_bound.squeeze()) & (y_test_sample <= upper_bound.squeeze())
-    Prop_g_M2_95_holder[i] = is_in_interval.float().mean().item()
-    
-    # 90% interval
-    lower_bound = test_prediction1 - 1.65 * torch.sqrt(test_g_direct)
-    upper_bound = test_prediction1 + 1.65 * torch.sqrt(test_g_direct)
+  is_in_interval = (y_test_sample >= lower_bound.squeeze()) & (y_test_sample <= upper_bound.squeeze())
+  Prop_g_M2_95_holder[i] = is_in_interval.float().mean().item()
+  
+  # 90% interval
+  lower_bound = test_prediction1 - 1.65 * torch.sqrt(test_g_direct)
+  upper_bound = test_prediction1 + 1.65 * torch.sqrt(test_g_direct)
 
-    is_in_interval = (y_test_sample >= lower_bound.squeeze()) & (y_test_sample <= upper_bound.squeeze())
-    Prop_g_M2_90_holder[i] = is_in_interval.float().mean().item()
+  is_in_interval = (y_test_sample >= lower_bound.squeeze()) & (y_test_sample <= upper_bound.squeeze())
+  Prop_g_M2_90_holder[i] = is_in_interval.float().mean().item()
 
 
   ############################
@@ -306,6 +322,7 @@ print('std of Prop_g_M3_95_holder:', np.std(Prop_g_M3_95_holder))
 print('std of Prop_g_M3_90_holder:', np.std(Prop_g_M3_90_holder))
 print('std of Prop_g_M4_95_holder:', np.std(Prop_g_M4_95_holder))
 print('std of Prop_g_M4_90_holder:', np.std(Prop_g_M4_90_holder))
+
 
 torch.save(Prop_g_M1_95_holder, os.path.join(args.output_dir, f'{args.data}_n{args.n}_M1_95.pt') )
 torch.save(Prop_g_M1_90_holder, os.path.join(args.output_dir, f'{args.data}_n{args.n}_M1_90.pt') )
