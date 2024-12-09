@@ -1,6 +1,7 @@
 library(ggplot2)
 library(patchwork)
 library(cowplot)
+library(dplyr)
 
 s1_data <- read.csv('data/s1_data_n6000.csv')
 s2_data <- read.csv('data/s2_data_n6000.csv')
@@ -10,23 +11,23 @@ s2_data <- s2_data[1:6000,]
 s3_data <- s3_data[1:6000,]
 
 
-s1_M1_prediction1 <- c(read.csv("result_plot/s1_M1_ghat.csv")[,1])
-s1_M3_prediction1 <- c(read.csv("result_plot/s1_M3_ghat.csv")[,1])
-s1_M5_prediction1 <- c(read.csv("result_plot/s1_M5_ghat.csv")[,2]) # col 1 is index
+s1_M1_prediction1 <- c(read.csv("data_for_plot/s1_M1_ghat.csv")[,1])
+s1_M3_prediction1 <- c(read.csv("data_for_plot/s1_M3_ghat.csv")[,1])
+s1_M5_prediction1 <- c(read.csv("data_for_plot/s1_M5_ghat.csv")[,2]) # col 1 is index
 s1_data$M1 <- s1_M1_prediction1; rm(s1_M1_prediction1)
 s1_data$M3 <- s1_M3_prediction1; rm(s1_M3_prediction1)
 s1_data$M5 <- s1_M5_prediction1; rm(s1_M5_prediction1)
 
-s2_M1_prediction1 <- c(read.csv("result_plot/s2_M1_ghat.csv")[,1])
-s2_M3_prediction1 <- c(read.csv("result_plot/s2_M3_ghat.csv")[,1])
-s2_M5_prediction1 <- c(read.csv("result_plot/s2_M5_ghat.csv")[,2]) # col 1 is index
+s2_M1_prediction1 <- c(read.csv("data_for_plot/s2_M1_ghat.csv")[,1])
+s2_M3_prediction1 <- c(read.csv("data_for_plot/s2_M3_ghat.csv")[,1])
+s2_M5_prediction1 <- c(read.csv("data_for_plot/s2_M5_ghat.csv")[,2]) # col 1 is index
 s2_data$M1 <- s2_M1_prediction1; rm(s2_M1_prediction1)
 s2_data$M3 <- s2_M3_prediction1; rm(s2_M3_prediction1)
 s2_data$M5 <- s2_M5_prediction1; rm(s2_M5_prediction1)
 
-s3_M1_prediction1 <- c(read.csv("result_plot/s3_M1_ghat.csv")[,1])
-s3_M3_prediction1 <- c(read.csv("result_plot/s3_M3_ghat.csv")[,1])
-s3_M5_prediction1 <- c(read.csv("result_plot/s3_M5_ghat.csv")[,2]) # col 1 is index
+s3_M1_prediction1 <- c(read.csv("data_for_plot/s3_M1_ghat.csv")[,1])
+s3_M3_prediction1 <- c(read.csv("data_for_plot/s3_M3_ghat.csv")[,1])
+s3_M5_prediction1 <- c(read.csv("data_for_plot/s3_M5_ghat.csv")[,2]) # col 1 is index
 s3_data$M1 <- s3_M1_prediction1; rm(s3_M1_prediction1)
 s3_data$M3 <- s3_M3_prediction1; rm(s3_M3_prediction1)
 s3_data$M5 <- s3_M5_prediction1; rm(s3_M5_prediction1)
@@ -72,7 +73,7 @@ p11 <- ggplot(s1_data, aes(x = x1, y = x2, color = g_value_modified)) +
   labs(x = "x1", y = "x2") +
   theme_minimal() +
   custom_color_scale1 + # color_scale1 +
-  ggtitle("g(x)") +
+  ggtitle("g*(x)") +
   theme(legend.position = "left")
 
 p12 <- ggplot(s1_data, aes(x = x1, y = x2, color = M1_modified)) +
@@ -139,7 +140,7 @@ p21 <- ggplot(s2_data, aes(x = x1, y = x2, color = g_value_modified)) +
   labs(x = "x1", y = "x2") +
   theme_minimal() +
   custom_color_scale2 + # color_scale2 +
-  ggtitle("g(x)") +
+  ggtitle("g*(x)") +
   theme(legend.position = "left")
 
 p22 <- ggplot(s2_data, aes(x = x1, y = x2, color = M1_modified)) +
@@ -209,7 +210,7 @@ p31 <- ggplot(s3_data, aes(x = x1, y = x2, color = g_value_modified)) +
   labs(x = "x1", y = "x2") +
   theme_minimal() +
   custom_color_scale3 + # color_scale3 +
-  ggtitle("g(x)") +
+  ggtitle("g*(x)") +
   theme(legend.position = "left")
 
 p32 <- ggplot(s3_data, aes(x = x1, y = x2, color = M1_modified)) +
@@ -241,7 +242,7 @@ combined_plot <- (p11 | p12 | p13 | p14) /
   (p21 | p22 | p23 | p24) /
   (p31 | p32 | p33 | p34) 
 
-print(combined_plot)
+print(combined_plot) # 12 by 8 
 
 
 
